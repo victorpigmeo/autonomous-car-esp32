@@ -1,5 +1,6 @@
 #include "mpu6050.h"
 #include "lora.h"
+#include "util.h"
 
 namespace MPU6050{
 
@@ -56,17 +57,8 @@ namespace MPU6050{
         Serial.println("===================================");
     }
 
-    float precision( float f, int places ){
-        float n = std::pow(10.0f, places ) ;
-        return std::round(f * n) / n ;
-    }
-
-    int8_t getFractional(float floatValue){
-         return ((precision(floatValue, 2) - (int8_t)floatValue)*1000);
-    }
-
     uint8_t getUnsignedFractional(float floatValue){
-         return ((precision(floatValue, 2) - (uint8_t)floatValue)*1000);
+         return ((Util::precision(floatValue, 2) - (uint8_t)floatValue)*1000);
     }
 
     void telemetryTask(void *pvParameters){
@@ -80,12 +72,12 @@ namespace MPU6050{
 
             MPU6050Telemetry telemetryPacket = MPU6050Telemetry(g, a, temp);
 
-            int8_t gyroX[4] = {2, 1, (int8_t)telemetryPacket.gyro[0], getFractional(telemetryPacket.gyro[0])};
-            int8_t gyroY[4] = {2, 2, (int8_t)telemetryPacket.gyro[1], getFractional(telemetryPacket.gyro[1])};
-            int8_t gyroZ[4] = {2, 3, (int8_t)telemetryPacket.gyro[2], getFractional(telemetryPacket.gyro[2])};
-            int8_t accelerationX[4] = {2, 4, (int8_t)telemetryPacket.acceleration[0], getFractional(telemetryPacket.acceleration[0])};
-            int8_t accelerationY[4] = {2, 5, (int8_t)telemetryPacket.acceleration[1], getFractional(telemetryPacket.acceleration[1])};
-            int8_t accelerationZ[4] = {2, 6, (int8_t)telemetryPacket.acceleration[2], getFractional(telemetryPacket.acceleration[2])};
+            int8_t gyroX[4] = {2, 1, (int8_t)telemetryPacket.gyro[0], getUnsignedFractional(telemetryPacket.gyro[0])};
+            int8_t gyroY[4] = {2, 2, (int8_t)telemetryPacket.gyro[1], getUnsignedFractional(telemetryPacket.gyro[1])};
+            int8_t gyroZ[4] = {2, 3, (int8_t)telemetryPacket.gyro[2], getUnsignedFractional(telemetryPacket.gyro[2])};
+            int8_t accelerationX[4] = {2, 4, (int8_t)telemetryPacket.acceleration[0], getUnsignedFractional(telemetryPacket.acceleration[0])};
+            int8_t accelerationY[4] = {2, 5, (int8_t)telemetryPacket.acceleration[1], getUnsignedFractional(telemetryPacket.acceleration[1])};
+            int8_t accelerationZ[4] = {2, 6, (int8_t)telemetryPacket.acceleration[2], getUnsignedFractional(telemetryPacket.acceleration[2])};
             int8_t temperature[4] = {2, 7, (uint8_t)telemetryPacket.temperature, getUnsignedFractional(telemetryPacket.temperature)};
 
             LoRaSender::send(gyroX);
