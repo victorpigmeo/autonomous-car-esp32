@@ -32,6 +32,7 @@ void onReceive(int packetSize){
 
 void setup(){
     Serial.begin(115200);
+    delay(3000);
 
     pinMode(LED_BUILTIN, OUTPUT);
 
@@ -60,7 +61,7 @@ void loop(){
     int packetSize = LoRa.parsePacket();
 
     if(packetSize) {
-      Serial.println(packetSize);
+        // Serial.println(packetSize);
         // Serial.print("Received: '");
         char lagalaga[packetSize];
         int i = 0;
@@ -79,12 +80,18 @@ void loop(){
         int8_t instrument = (lagalaga[0]);
         int8_t property = (lagalaga[1]);
         int8_t integer = (lagalaga[2]);
-        int8_t fraction = (lagalaga[3]);
+        //TODO fraction must be uint_8 for 1byte fraction packets
+        uint8_t fraction = (uint8_t) lagalaga[3];
 
+        Serial.print("INS: ");
         Serial.print(instrument);
+        Serial.print(" PROP: ");
         Serial.print( property);
+        Serial.print(" INT: ");
         Serial.print(integer);
+        Serial.print(" FRAC: ");
         Serial.println(fraction);
+        Serial.println("--------------------------------------------");
 
         // int motor =
     }

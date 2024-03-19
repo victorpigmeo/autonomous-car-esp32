@@ -1,28 +1,15 @@
 // Received packet: SAT:6 | LATLNG:-25.435027,-49.303831 | BLNTH:435027167,303830667 | SPD:0.24 | ALT:954.20 | CRS:11900 |
 
 #include <Arduino.h>
-#include <LoRa.h>
-#include <TinyGPS++.h>
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
-#include <Wire.h>
+#include "motors.h"
+#include "mpu6050.h"
+#include "lora.h"
+#include "gps.h"
 
-#define NSS 4
-#define RST 5
-#define DI0 15
 #define LED_BUILTIN 2
 
-#define BACK 25
-#define FRONT 26
-#define LEFT 33
-#define RIGHT 32
-
-#define GPS_BAUDRATE 9600
-#define RXD2 16
-#define TXD2 17
 
 TinyGPSPlus gps;
-Adafruit_MPU6050 mpu;
 
 // struct LoRaPacket {
 //     int8_t sensor;
@@ -68,8 +55,6 @@ unsigned char* intToByte(const int& N) {
 
 void telemetryTask(void *pvParameters){
     while(true){
-        sensors_event_t a, g, temp;
-        mpu.getEvent(&g, &a, &temp);
 
         digitalWrite(LED_BUILTIN, LOW);
 
@@ -126,13 +111,13 @@ void telemetryTask(void *pvParameters){
 
 
 
-        LoRa.beginPacket();
-        for(int i = 0; i < 4; i++){
-            byte bytes = motor_packet[i];
-            Serial.println(bytes);
-            LoRa.write(bytes);
-        }
-        LoRa.endPacket();
+        // LoRa.beginPacket();
+        // for(int i = 0; i < 4; i++){
+        //     byte bytes = motor_packet[i];
+        //     Serial.println(bytes);
+        //     LoRa.write(bytes);
+        // }
+        // LoRa.endPacket();
 
 
         // LoRa.beginPacket();
@@ -157,63 +142,31 @@ void telemetryTask(void *pvParameters){
     }
 }
 
-void walkTask(void *pvParameters){
-    while(true){
-        sensors_event_t a, g, temp;
-        mpu.getEvent(&g, &a, &temp);
+// void walkTask(void *pvParameters){
+//     while(true){
+//         sensors_event_t a, g, temp;
+//         mpu.getEvent(&g, &a, &temp);
 
-        Serial.print("OI | ");
-        Serial.println(g.gyro.x);
+//         Serial.print("OI | ");
+//         Serial.println(g.gyro.x);
 
-        delay(500);
-    }
-}
+//         delay(500);
+//     }
+// }
 
 void setup(){
     Serial.begin(115200);
     delay(3000);
-    Serial2.begin(GPS_BAUDRATE, SERIAL_8N1, RXD2, TXD2);
-
-    Serial.println("===================================");
-    Serial.println("Pins");
-    Serial.println("===================================");
 
     pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(BACK, OUTPUT);
-    pinMode(FRONT, OUTPUT);
-    pinMode(LEFT, OUTPUT);
-    pinMode(RIGHT, OUTPUT);
 
-    Serial.println("Pins setted");
+    Motors::setupMotors();
+    MPU6050::setupMPU6050();
+    LoRaSender::setupLoRa();
+    GPS::setupGPS();
 
-    Serial.println("===================================");
-    Serial.println("Gyro");
-    Serial.println("===================================");
-
-    if(!mpu.begin()){
-        Serial.println("Failed to find MPU6050");
-    }
-
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-    mpu.setGyroRange(MPU6050_RANGE_1000_DEG);
-    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
-    Serial.println("Gyro intialized");
-
-    Serial.println("===================================");
-    Serial.println("LoRa Sender");
-    Serial.println("===================================");
-
-    LoRa.setPins(NSS, RST, DI0);
-
-    while(!LoRa.begin(433E6)){
-        Serial.print(".");
-        delay(500);
-    }
-
-    LoRa.setSyncWord(0xFA);
-    Serial.println("LoRa Initialized");
-
-    xTaskCreate(telemetryTask, "telemetryTask", 2048, NULL, 1, NULL);
+    xTaskCreate(MPU6050::telemetryTask, "MPU6050TelemetryTask", 2048, NULL, 1, NULL);
+    // xTaskCreate(telemetryTask, "telemetryTask", 2048, NULL, 1, NULL);
     // xTaskCreate(walkTask, "walkTask", 2048, NULL, 1, NULL);
 }
 
